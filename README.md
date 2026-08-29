@@ -16,5 +16,6 @@ To add:
  - option pipeline: stop at FilterFasta step. continue to create CDSs matrix using multiple sequencing RUN / SRA download
  - create partition files (raxml format) for iqtree: per gene, per gene and codon position
  - option to run only mitochondrion step
+ - QC matrix for Positive Selection Tests (internal STOP), recombination etc...
  - Complete README.md to do on final version
 
