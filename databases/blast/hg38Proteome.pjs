@@ -1,0 +1,24 @@
+{
+  "version": "1.2",
+  "dbname": "hg38Proteome",
+  "dbtype": "Protein",
+  "db-version": 5,
+  "description": "Hg38_Ensembl111_proteome_n23214_27022024_ENSG-ENST.faa",
+  "number-of-letters": 13138511,
+  "number-of-sequences": 23214,
+  "last-updated": "2024-03-16T18:11:00",
+  "number-of-volumes": 1,
+  "bytes-total": 19075674,
+  "bytes-to-cache": 13347582,
+  "files": [
+    "hg38Proteome.pdb",
+    "hg38Proteome.phr",
+    "hg38Proteome.pin",
+    "hg38Proteome.pog",
+    "hg38Proteome.pos",
+    "hg38Proteome.pot",
+    "hg38Proteome.psq",
+    "hg38Proteome.ptf",
+    "hg38Proteome.pto"
+  ]
+}
