@@ -1,0 +1,36 @@
+name: ptp_env
+channels:
+  - anaconda
+  - bioconda
+  - conda-forge
+  - daler
+dependencies:
+  - bowtie2
+  - cd-hit
+  - cialign
+  - clipkit
+  - corset
+  - csvtk
+  - dos2unix
+  - fastqc
+  - ffq
+  - iqtree
+  - jq
+  - kraken2
+  - ncbi-datasets-cli
+  - novoplasty
+  - perl-bioperl
+  - phykit
+  - pysradb
+  - rcorrector
+  - salmon
+  - seqkit
+  - sratoolkit
+  - treeshrink
+  - trim-galore
+  - pip:
+    - PyYAML==6.0.3
+    - psutil==7.2.2
+    - pysam==0.24.0
+
+prefix: "/soft/2019013/Conda_env/ptp_env"
