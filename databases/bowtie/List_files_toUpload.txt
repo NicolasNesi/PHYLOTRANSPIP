@@ -1,0 +1,8 @@
+contam_bt2_index.1.bt2
+contam_bt2_index.2.bt2
+contam_bt2_index.3.bt2
+contam_bt2_index.4.bt2
+contam_bt2_index.rev.1.bt2
+contam_bt2_index.rev.2.bt2
+
+Or scripts to create the decontamination data 
