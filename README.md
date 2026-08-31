@@ -9,9 +9,11 @@ To add:
  - companion script to get list of SRA available for your group of interest (e.g. Phyllostomidae) and then create your list_sra.csv file
  - list of softs needed and yml files to create mamba environments
  - create an apptainer/singularity?
- - calculate site saturation per gene alignment (Philippe et al. 2011) -> phykit sat -a gene1_msa.aln -t gene1_genetree.tre
- - calculate Treeness (signal-to-noise among branch lengths) divided by relative composition variability (measure of composition bias) (treeness/RCV) -> phykit toverr -a gene1_msa.aln -t gene1_genetree.tre
- - calulate long branch score -> phykit lb_score -t gene1_genetree.tre
+ - calculate saturation for a given tree and alignment (Philippe et al. 2011) -> phykit saturation --alignment <alignment> --tree <tree>
+ - calculate Treeness (signal-to-noise among branch lengths) divided by Relative Composition Variability (measure of composition bias) (treeness/RCV) -> phykit treeness_over_rcv --alignment <alignment> --tree <tree>
+ - calculate long branch score -> phykit long_branch_score <tree>
+ - phykit degree_of_violation_of_a_molecular_clock <tree>
+ - phykit evolutionary_rate <tree>
  - pipeline flowchart
  - option pipeline: stop at FilterFasta step. continue to create CDSs matrix using multiple sequencing RUN / SRA download
  - create partition files (raxml format) for iqtree: per gene, per gene and codon position
