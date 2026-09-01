@@ -34,6 +34,13 @@ process FILTERFASTA {
         fi
     done < ${ortholog_1to1_list}
 
+    # Garde la séquence la plus longue en cas d'ID dupliqué, puis retire les doublons exacts
+    for f in *_CDS_OnetoOne.fasta; do
+        keep_longest.py "\$f" > "\${f%.fasta}_tmp.fasta"
+        seqkit rmdup --by-seq -w 0 "\${f%.fasta}_tmp.fasta" -o "\$f"
+        rm "\${f%.fasta}_tmp.fasta"
+    done
+
     seqkit stats *_CDS_OnetoOne.fasta -T | csvtk cut -t -f "file,num_seqs,sum_len" > ${sample_id}_statistic_CDSs.tsv
     """
 }
