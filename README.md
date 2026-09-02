@@ -18,7 +18,7 @@ The pipeline expects the following environments to already exist (see `nextflow.
 
 | Environment | Used for |
 |---|---|
-| `ptp_env` | Core tools: seqkit, csvtk, bowtie2, cd-hit, blast+, BioPerl, salmon, corset, CIAlign, clipkit, macse, phykit, PhiPack |
+| `ptp_env` | Core tools: fasterq-dump, seqkit, csvtk, bowtie2, cd-hit, blast+, BioPerl, salmon, corset, CIAlign, clipkit, macse, phykit, PhiPack |
 | `trinity_env` | Trinity assembly, TrinityStats.pl, analyze_blastPlus_topHit_coverage.pl, blast (recip. blast) |
 | `busco_env` | BUSCO |
 | `transdecoder_env` | TransDecoder |
