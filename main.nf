@@ -19,12 +19,13 @@ params.min_species_genetree = 10
 
 params.novoplasty_seed         = null
 params.novoplasty_genome_range = '12000-22000'
-params.novoplasty_kmer         = 23
+params.novoplasty_kmer         = 33
 params.novoplasty_read_length  = 151
 params.novoplasty_insert_size  = 300
 params.mitos_refdir            = '/dlocal/home/2019013/Databases/MITOS2'
 params.mitos_refseqver         = 'refseq63m'
 params.mitos_code              = 2
+params.min_seq_guidance        = 6
 
 params.mode             = 'full'   // full | mito_only | per_sample | downstream
 params.previous_outdirs = null     // requis pour --mode downstream
@@ -84,7 +85,7 @@ def helpMessage() {
     Mitogenome assembly (NOVOPlasty + MITOS2) :
       --novoplasty_seed          <fasta>   Mitochondrial seed sequence (e.g. COI), required
       --novoplasty_genome_range  <min-max> Expected mitogenome size range [default: 12000-22000]
-      --novoplasty_kmer          <int>     NOVOPlasty k-mer size [default: 23]
+      --novoplasty_kmer          <int>     NOVOPlasty k-mer size [default: 33]
       --novoplasty_read_length   <int>     Read length [default: 151]
       --novoplasty_insert_size   <int>     Insert size [default: 300]
       --mitos_refdir             <dir>     MITOS2 reference database directory
@@ -182,11 +183,14 @@ include { BUSCO }            from './modules/busco.nf'
 include { MITOGENOMES }      from './modules/mitogenomes.nf'
 
 include { MAKEMULTIFASTA }   from './modules/makemultifasta.nf'
+include { MITO_MULTIFASTA }  from './modules/mitomultifasta.nf'
+include { MITO_WHOLE_ALIGN } from './modules/mitowholealign.nf'
 include { GUIDANCE }         from './modules/guidance.nf'
 include { FILTERALIGNMENTS } from './modules/filteralignments.nf'
 include { GENETREE }         from './modules/genetree.nf'
 include { QCTREE }           from './modules/qctree.nf'
 include { CONCATENATION }    from './modules/concatenation.nf'
+include { MITO_CONCAT }      from './modules/mitoconcatenation.nf'
 include { GENETREE2 }        from './modules/genetree2.nf'
 include { STATSALGTREE }     from './modules/statsalgtree.nf'
 
@@ -209,6 +213,8 @@ workflow {
     def db_bowtie_dir  = "${scripts_dir}/databases/bowtie"
     def db_blast_dir   = "${scripts_dir}/databases/blast"
 
+    def pcg_list = ['nad1','nad2','nad3','nad4','nad4l','nad5','nad6','cob','cox1','cox2','cox3','atp6','atp8']
+
     /*
      * ==========================================================
      *  MODE: downstream — multi-sample phylogenomics only
@@ -222,19 +228,26 @@ workflow {
 
         def outdirs = params.previous_outdirs.split(',').collect { it.trim() }
 
-        def ortholog_1to1_ch = Channel.fromPath("${scripts_dir}/List_Ortholog_1to1_${params.ortholog_taxon}_Hsapiens_Ensembl.tsv")
+        def ortholog_1to1_ch  = Channel.fromPath("${scripts_dir}/List_Ortholog_1to1_${params.ortholog_taxon}_Hsapiens_Ensembl.tsv")
+        def mito_gene_list_ch = Channel.fromPath("${scripts_dir}/List_Mito_Genes.txt")
+        def pcg_gene_list_ch  = Channel.fromPath("${scripts_dir}/List_Mito_PCG.txt")
 
+        // -- orthologues nucléaires --
         def all_orthologs_ch = Channel
             .fromPath(outdirs.collect { "${it}/CombinedSRR/*/orthologs/*_CDS_OnetoOne.fasta" })
             .flatten()
             .collect()
 
         MAKEMULTIFASTA(all_orthologs_ch, ortholog_1to1_ch)
-        GUIDANCE(MAKEMULTIFASTA.out.multifasta.flatten())
-        FILTERALIGNMENTS(GUIDANCE.out.aligned)
-        GENETREE(FILTERALIGNMENTS.out.cleaned)
 
-        def qctree_alignments = FILTERALIGNMENTS.out.cleaned.map { it[1] }.collect()
+        def guidance_nuclear = GUIDANCE(
+            MAKEMULTIFASTA.out.multifasta.flatten().map { f -> tuple(f, 'codon') }
+        )
+        def filteralign_nuclear = FILTERALIGNMENTS(guidance_nuclear.aligned)
+
+        GENETREE(filteralign_nuclear.cleaned)
+
+        def qctree_alignments = filteralign_nuclear.cleaned.map { it[1] }.collect()
         def qctree_trees      = GENETREE.out.tree.map { it[1] }.collect()
 
         QCTREE(qctree_alignments, qctree_trees)
@@ -256,6 +269,44 @@ workflow {
         STATSALGTREE(statsalgtree_input)
         STATSALGTREE.out.stats
             .collectFile(name: 'all_genes_stats_summary.tsv', storeDir: params.outdir, keepHeader: true, skip: 1)
+
+        // -- mitogénome --
+        def mito_gene_fastas_ch = Channel
+            .fromPath(outdirs.collect { "${it}/CombinedSRR/*/novoplasty/genes/*.fasta" })
+            .flatten()
+            .collect()
+
+        def mito_whole_ch = Channel
+            .fromPath(outdirs.collect { "${it}/CombinedSRR/*/novoplasty/*_whole_mito.fasta" })
+            .flatten()
+            .collect()
+
+        MITO_MULTIFASTA(mito_gene_fastas_ch, mito_whole_ch, mito_gene_list_ch)
+
+        // Optionnel — décommente si tu veux un alignement MAFFT du génome entier (avec D-loop), non utilisé en aval
+        // MITO_WHOLE_ALIGN(MITO_MULTIFASTA.out.whole_multifasta)
+
+        def guidance_mito = GUIDANCE(
+            MITO_MULTIFASTA.out.gene_multifasta
+                .flatten()
+                .map { f ->
+                    def gname = f.name.replaceAll(/_MitoMultiFasta\.fasta$/, '')
+                    def stype = pcg_list.contains(gname) ? 'codon' : 'nuc'
+                    tuple(f, stype)
+                }
+        )
+        def filteralign_mito = FILTERALIGNMENTS(guidance_mito.aligned)
+
+        def mito_cleaned_ch = filteralign_mito.cleaned
+            .filter { gene, aln, seqType -> !(gene in ['OH', 'OL']) }
+            .map { gene, aln, seqType -> aln }
+            .collect()
+
+        def mito_pos12_ch = filteralign_mito.pos12
+            .map { gene, aln -> aln }
+            .collect()
+
+        MITO_CONCAT(mito_cleaned_ch, mito_pos12_ch, pcg_gene_list_ch)
 
         return
     }
@@ -280,7 +331,6 @@ workflow {
 
     def seed_ch = Channel.fromPath(params.novoplasty_seed)
 
-    // -- construction des reads (SRA ou locaux), commune à tous les modes --
     def reads_ch
     if (params.download_sra) {
         Channel
@@ -385,7 +435,6 @@ workflow {
 
     FILTERFASTA(RCPBLAST.out.orthologs, ortholog_1to1_ch)
 
-    // -- QC par échantillon, en parallèle, quel que soit full/per_sample --
     def busco_input = TRINITY.out.assembly.join(CHIMERA.out.filtered)
     BUSCO(busco_input)
 
@@ -405,14 +454,52 @@ workflow {
      *  MODE: full — enchaîne directement sur la phylogénomique
      * ==========================================================
      */
+    def mito_gene_list_ch = Channel.fromPath("${scripts_dir}/List_Mito_Genes.txt")
+    def pcg_gene_list_ch  = Channel.fromPath("${scripts_dir}/List_Mito_PCG.txt")
+
+    def mito_gene_fastas_ch = MITOGENOMES.out.gene_fastas.collect()
+    def mito_whole_ch       = MITOGENOMES.out.whole_mito.map { it[1] }.collect()
+
+    MITO_MULTIFASTA(mito_gene_fastas_ch, mito_whole_ch, mito_gene_list_ch)
+
+    // Optionnel — décommente si tu veux un alignement MAFFT du génome entier (avec D-loop), non utilisé en aval
+    // MITO_WHOLE_ALIGN(MITO_MULTIFASTA.out.whole_multifasta)
+
+    def guidance_mito = GUIDANCE(
+        MITO_MULTIFASTA.out.gene_multifasta
+            .flatten()
+            .map { f ->
+                def gname = f.name.replaceAll(/_MitoMultiFasta\.fasta$/, '')
+                def stype = pcg_list.contains(gname) ? 'codon' : 'nuc'
+                tuple(f, stype)
+            }
+    )
+    def filteralign_mito = FILTERALIGNMENTS(guidance_mito.aligned)
+
+    def mito_cleaned_ch = filteralign_mito.cleaned
+        .filter { gene, aln, seqType -> !(gene in ['OH', 'OL']) }
+        .map { gene, aln, seqType -> aln }
+        .collect()
+
+    def mito_pos12_ch = filteralign_mito.pos12
+        .map { gene, aln -> aln }
+        .collect()
+
+    MITO_CONCAT(mito_cleaned_ch, mito_pos12_ch, pcg_gene_list_ch)
+
+    // -- pipeline nucléaire --
     def all_orthologs_ch = FILTERFASTA.out.onetoone.map { it[1] }.flatten().collect()
 
     MAKEMULTIFASTA(all_orthologs_ch, ortholog_1to1_ch)
-    GUIDANCE(MAKEMULTIFASTA.out.multifasta.flatten())
-    FILTERALIGNMENTS(GUIDANCE.out.aligned)
-    GENETREE(FILTERALIGNMENTS.out.cleaned)
 
-    def qctree_alignments = FILTERALIGNMENTS.out.cleaned.map { it[1] }.collect()
+    def guidance_nuclear = GUIDANCE(
+        MAKEMULTIFASTA.out.multifasta.flatten().map { f -> tuple(f, 'codon') }
+    )
+    def filteralign_nuclear = FILTERALIGNMENTS(guidance_nuclear.aligned)
+
+    GENETREE(filteralign_nuclear.cleaned)
+
+    def qctree_alignments = filteralign_nuclear.cleaned.map { it[1] }.collect()
     def qctree_trees      = GENETREE.out.tree.map { it[1] }.collect()
 
     QCTREE(qctree_alignments, qctree_trees)
