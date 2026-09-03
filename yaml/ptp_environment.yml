@@ -1,0 +1,38 @@
+name: ptp_env
+channels:
+  - anaconda
+  - bioconda
+  - conda-forge
+  - daler
+dependencies:
+  - amas
+  - bowtie2
+  - cd-hit
+  - cialign
+  - clipkit
+  - corset
+  - csvtk
+  - dos2unix
+  - fastqc
+  - ffq
+  - iqtree
+  - jq
+  - kraken2
+  - macse
+  - ncbi-datasets-cli
+  - novoplasty
+  - perl-bioperl
+  - bioconda::phipack
+  - phykit
+  - pysradb
+  - rcorrector
+  - salmon
+  - seqkit
+  - sratoolkit
+  - treeshrink
+  - trim-galore
+  - pip:
+    - PyYAML==6.0.3
+    - psutil==7.2.2
+    - pysam==0.24.0
+
