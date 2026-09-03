@@ -18,13 +18,13 @@ The pipeline expects the following environments to already exist (see `nextflow.
 
 | Environment | Used for |
 |---|---|
-| `ptp_env` | Core tools: fasterq-dump, clipkit, seqkit, csvtk, bowtie2, cd-hit, blast+, BioPerl, salmon, corset, CIAlign, clipkit, macse, phykit, PhiPack |
-| `trinity_env` | Trinity assembly, TrinityStats.pl, analyze_blastPlus_topHit_coverage.pl, blast (recip. blast) |
+| `ptp_env` | amas, bowtie2, cd-hit, cialign, clipkit, corset, csvtk, fastqc, ffq, IQ-TREE2, MACSE, NOVOplasty, perl-bioperl, phykit, pysradb, rcorrector, salmon, seqkit, sratoolkit, treeshrink, trim-galore |
+| `trinity_env` | analyze_blastPlus_topHit_coverage.pl, Trinity assembly, TrinityStats.pl, blast+ (recip. blast) |
 | `busco_env` | BUSCO |
 | `transdecoder_env` | TransDecoder |
 | `python2_env` | Legacy Python 2 scripts (chimera detection) |
 | `guidance3_env` | Guidance3 (alignment), MACSE, PRANK |
-| `phylo_env` | IQ-TREE2, TreeShrink, NOVOPlasty, MITOS2 |
+| `phylo_env` | MITOS2 |
 
 ### Custom scripts (`Scripts/bin/`)
 
