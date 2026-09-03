@@ -16,6 +16,8 @@ process MITOGENOMES {
     output:
     tuple val(sample_id), path("Circularized_assembly_1_${sample_id}.fas"), emit: assembly, optional: true
     path "mitos_out", emit: mitos_annotation, optional: true
+    path "genes/*.fasta", emit: gene_fastas, optional: true
+    tuple val(sample_id), path("${sample_id}_whole_mito.fasta"), emit: whole_mito, optional: true
     path "log_${sample_id}.txt", emit: log
 
     script:
@@ -63,8 +65,31 @@ EOF
 
     NOVOPlasty4.3.5.pl -c config_${sample_id}.txt > log_${sample_id}.txt 2>&1
 
+    if [ -f "Circularized_assembly_${sample_id}.fasta" ]; then
+        cp Circularized_assembly_${sample_id}.fasta Circularized_assembly_1_${sample_id}.fas
+        echo "Status: circularized (single contig)" >> log_${sample_id}.txt
+
+    elif ls Option_*_${sample_id}.fasta >/dev/null 2>&1; then
+        first_option=\$(ls Option_*_${sample_id}.fasta | sort | head -1)
+        cp "\$first_option" Circularized_assembly_1_${sample_id}.fas
+        echo "Status: merged from multiple contigs, using \$first_option (check Merged_contigs_${sample_id}.txt manually)" >> log_${sample_id}.txt
+
+    elif [ -f "Contigs_1_${sample_id}.fasta" ]; then
+        cp Contigs_1_${sample_id}.fasta Circularized_assembly_1_${sample_id}.fas
+        echo "Status: NOT circularized, using raw contig (may be incomplete/partial mitogenome)" >> log_${sample_id}.txt
+
+    else
+        echo "Status: NOVOPlasty produced no usable contig for ${sample_id}" >> log_${sample_id}.txt
+    fi
+
     if [ -f "Circularized_assembly_1_${sample_id}.fas" ]; then
-        mkdir -p mitos_out
+        len=\$(grep -v '^>' Circularized_assembly_1_${sample_id}.fas | tr -d '\\n' | wc -c)
+        echo "Assembly length: \${len} bp" >> log_${sample_id}.txt
+        if [ "\$len" -lt 14000 ]; then
+            echo "WARNING: assembly shorter than expected mitogenome size, likely incomplete" >> log_${sample_id}.txt
+        fi
+
+        mkdir -p mitos_out genes
         runmitos.py \\
             --input Circularized_assembly_1_${sample_id}.fas \\
             --linear \\
@@ -72,6 +97,10 @@ EOF
             --refseqver ${params.mitos_refseqver} \\
             --refdir ${params.mitos_refdir} \\
             --outdir mitos_out
+
+        split_mitos_genes.py mitos_out/result.fas ${sample_id} genes
+
+        awk -v id="${sample_id}" '/^>/{print ">"id; next} {print}' Circularized_assembly_1_${sample_id}.fas > ${sample_id}_whole_mito.fasta
     else
         echo "NOVOPlasty did not produce a circularized assembly for ${sample_id}" >> log_${sample_id}.txt
     fi

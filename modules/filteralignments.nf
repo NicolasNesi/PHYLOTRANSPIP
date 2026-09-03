@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 /*
- * Filtering and cleaning of alignments
+ * Filtering and cleaning of alignments — generic, nuclear (codon) or mito (codon/nuc)
  */
  
 process FILTERALIGNMENTS {
@@ -16,11 +16,12 @@ process FILTERALIGNMENTS {
     }
 
     input:
-    tuple val(gene), path(alignment)
+    tuple val(gene), path(alignment), val(seqType)
 
     output:
-    tuple val(gene), path("${gene}_GuidancePRANK_algn_raw.fasta"), emit: raw, optional: true
-    tuple val(gene), path("${gene}_GuidancePRANK_algn_cleaned.fasta"), emit: cleaned, optional: true
+    tuple val(gene), path("${gene}_GuidancePRANK_algn_raw.fasta"), val(seqType), emit: raw, optional: true
+    tuple val(gene), path("${gene}_GuidancePRANK_algn_cleaned.fasta"), val(seqType), emit: cleaned, optional: true
+    tuple val(gene), path("${gene}_GuidancePRANK_algn_pos12.fasta"), emit: pos12, optional: true
     path "${gene}_stats_trimEnd.txt", optional: true
     path "${gene}_GuidancePRANK_algn_raw_output.svg", optional: true
     path "${gene}_GuidancePRANK_algn_cleaned_output.svg", optional: true
@@ -33,16 +34,27 @@ process FILTERALIGNMENTS {
 
     remove_short_fasta.py ${gene}_GuidancePRANK_algn_sorted.fasta ${gene}_GuidancePRANK_algn_trimshort.fasta 0.75
 
-    macse -prog trimAlignment \\
-        -align ${gene}_GuidancePRANK_algn_trimshort.fasta \\
-        -min_percent_NT_at_ends 0.5 \\
-        -out_trim_info ${gene}_stats_trimEnd.txt
+    if [ "${seqType}" = "codon" ]; then
+        macse -prog trimAlignment \\
+            -align ${gene}_GuidancePRANK_algn_trimshort.fasta \\
+            -min_percent_NT_at_ends 0.5 \\
+            -out_trim_info ${gene}_stats_trimEnd.txt
+        clipkit_extra="--codon"
+    else
+        cp ${gene}_GuidancePRANK_algn_trimshort.fasta ${gene}_GuidancePRANK_algn_trimshort_NT.fasta
+        touch ${gene}_stats_trimEnd.txt
+        clipkit_extra=""
+    fi
 
     clipkit ${gene}_GuidancePRANK_algn_trimshort_NT.fasta \\
         -m gappy \\
         --gaps 0.9 \\
-        --codon \\
+        \${clipkit_extra} \\
         --output ${gene}_GuidancePRANK_algn_trimshort.trimmed.fa
+    
+    if [ "${seqType}" = "codon" ]; then
+      clipkit ${gene}_GuidancePRANK_algn_trimshort.trimmed.fa -m c3 --output ${gene}_GuidancePRANK_algn_pos12.fasta
+    fi
 
     remove_short_fasta.py ${gene}_GuidancePRANK_algn_trimshort.trimmed.fa ${gene}_GuidancePRANK_algn_trimshort.trimmed2.fa 0.80
 
