@@ -44,7 +44,8 @@ def helpMessage() {
     log.info """\
     ===========================================================================
     N E X T F L O W - P H Y L O T R A N S C R I P T O M I C S  P I P E L I N E 
-    ( P H Y L O T R A N S P I P)
+    
+                         ( P H Y L O T R A N S P I P)
     ===========================================================================
 
     Usage:
@@ -52,35 +53,33 @@ def helpMessage() {
 
     Modes (--mode):
       full        Whole pipeline: per-sample assembly through phylogenomics (default)
+      
       mito_only   Reads -> trimming -> NOVOPlasty/MITOS2 mitogenome assembly only
+      
       per_sample  Per-sample steps only (assembly through 1-to-1 orthologs), stops
                   before the multi-sample convergence step. Use this to process
                   independent sequencing/SRA batches separately.
+                  
       downstream  Multi-sample phylogenomics steps only, starting from the
                   1-to-1 orthologs produced by one or more previous --mode per_sample
                   runs (see --previous_outdirs).
 
     Required:
-      --folder               <dir>       Project root folder
-                                          (must contain Scripts/main.nf, Scripts/databases/,
-                                          and, if applicable, IlluminaOutput/)
+      --folder          <dir>       Project root folder (must contain Scripts/main.nf, Scripts/databases/, and, if applicable, IlluminaOutput/)
 
     Mode SRA download (--download_sra true) :
-      --sra_list       <file>      CSV file (in Scripts/) : Genus_species_locality_code,SRRcode
+      --sra_list        <file>      CSV file (in Scripts/) : Genus_species_locality_code,SRRcode
 
     Mode reads already present (--download_sra false) :
-      --samp_list      <file>      CSV file (in Scripts/) : sample_id,...
-      --illumina       <dir>       Fastq.gz subfolder name [default: IlluminaOutput]
+      --samp_list       <file>      CSV file (in Scripts/) : sample_id,...
+      --illumina        <dir>       Fastq.gz subfolder name [default: IlluminaOutput]
 
     Databases (in Scripts/databases/) :
       --taxon           <name>     Prefix for the rRNA/mtDNA bowtie2 indexes of the species
-                                    of interest, in databases/bowtie/<taxon>_rRNA and
-                                    <taxon>_mtDNA [default: phyllostomidae]
+                                         of interest, in databases/bowtie/<taxon>_rRNA and <taxon>_mtDNA [default: phyllostomidae]
       --ortholog_taxon  <name>     Name of the Ensembl reference taxon used in the 1-to-1
-                                    ortholog list (Scripts/List_Ortholog_1to1_<ortholog_taxon>_Hsapiens_Ensembl.tsv)
-                                    [default: Microbat]
-      --busco_lineage   <name>     BUSCO lineage dataset name (online mode, auto-downloaded)
-                                    [default: mammalia_odb12]
+                                         ortholog list (Scripts/List_Ortholog_1to1_<ortholog_taxon>_Hsapiens_Ensembl.tsv) [default: Microbat]
+      --busco_lineage   <name>     BUSCO lineage dataset name (online mode, auto-downloaded) [default: mammalia_odb12]
 
     Mitogenome assembly (NOVOPlasty + MITOS2) :
       --novoplasty_seed          <fasta>   Mitochondrial seed sequence (e.g. COI), required
@@ -93,17 +92,15 @@ def helpMessage() {
       --mitos_code               <int>     Genetic code for MITOS2 [default: 2]
 
     Downstream mode only:
-      --previous_outdirs   <list>   Comma-separated list of previous --mode per_sample
-                                     output directories to combine, e.g.:
-                                     results_batch1,results_batch2
-
-    Optional:
-      --outdir                <dir>   Output directory [default: results]
-      --min_species_genetree   <int>  Minimum number of species required to build a gene tree
-                                       [default: 10]
+      --previous_outdirs         <list>    Comma-separated list of previous --mode per_sample output directories to combine,
+                                                                               e.g.:results_batch1,results_batch2
+                                 
+    Optional:                    
+      --outdir                   <dir>     Output directory [default: results]
+      --min_species_genetree     <int>     Minimum number of species required to build a gene tree [default: 10]
 
     Other:
-      --help / --h                 Show this help message and exit
+      --help / --h                         Show this help message and exit
 
     Examples:
       # Whole pipeline, single batch
@@ -165,7 +162,7 @@ log.info """\
 include { WGETSRA }          from './modules/wgetsra.nf'
 include { RCORRECT }         from './modules/rcorrect.nf'
 include { TRIMGALORE }       from './modules/trimgalore.nf'
-include { DECONTAM_MAP }     from './modules/decontam_map.nf'
+include { DECONTAM_MAP }     from './modules/decontammap.nf'
 include { QCTRIM }           from './modules/qctrim.nf'
 include { BOWTIEFILTER }     from './modules/bowtiefilter.nf'
 include { FILTEROVERREP }    from './modules/filteroverrep.nf'
