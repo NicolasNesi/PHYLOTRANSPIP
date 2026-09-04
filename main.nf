@@ -41,12 +41,22 @@ params.h      = false
 */
 
 def helpMessage() {
+    def asciiBanner = $/
+      ____  _   ___   ___     ___ _____ ____      _    _   _ ____  ____ ___ ____  
+     |  _ \| | | \ \ / / |   / _ \_   _|  _ \    / \  | \ | / ___||  _ \_ _|  _ \ 
+     | |_) | |_| |\ V /| |  | | | || | | |_) |  / _ \ |  \| \___ \| |_) | || |_) |
+     |  __/|  _  | | | | |__| |_| || | |  _ <  / ___ \| |\  |___) |  __/| ||  __/ 
+     |_|   |_| |_| |_| |_____\___/ |_| |_| \_\/_/   \_\_| \_|____/|_|  |___|_|    
+                                                                              
+/$
+
     log.info """\
-    ===========================================================================
-    N E X T F L O W - P H Y L O T R A N S C R I P T O M I C S  P I P E L I N E 
-    
-                         ( P H Y L O T R A N S P I P)
-    ===========================================================================
+    ${asciiBanner}
+      ===========================================================================
+      N E X T F L O W - P H Y L O T R A N S C R I P T O M I C S  P I P E L I N E 
+      
+                           ( P H Y L O T R A N S P I P)
+      ===========================================================================
 
     Usage:
       nextflow run main.nf [options]
@@ -68,18 +78,18 @@ def helpMessage() {
       --folder          <dir>       Project root folder (must contain Scripts/main.nf, Scripts/databases/, and, if applicable, IlluminaOutput/)
 
     Mode SRA download (--download_sra true) :
-      --sra_list        <file>      CSV file (in Scripts/) : Genus_species_locality_code,SRRcode
+      --sra_list        <file>      CSV file (in Scripts/): Genus_species_locality_code,SRRcode
 
     Mode reads already present (--download_sra false) :
-      --samp_list       <file>      CSV file (in Scripts/) : sample_id,...
+      --samp_list       <file>      CSV file (in Scripts/): sample_id,...
       --illumina        <dir>       Fastq.gz subfolder name [default: IlluminaOutput]
 
     Databases (in Scripts/databases/) :
-      --taxon           <name>     Prefix for the rRNA/mtDNA bowtie2 indexes of the species
-                                         of interest, in databases/bowtie/<taxon>_rRNA and <taxon>_mtDNA [default: phyllostomidae]
-      --ortholog_taxon  <name>     Name of the Ensembl reference taxon used in the 1-to-1
-                                         ortholog list (Scripts/List_Ortholog_1to1_<ortholog_taxon>_Hsapiens_Ensembl.tsv) [default: Microbat]
-      --busco_lineage   <name>     BUSCO lineage dataset name (online mode, auto-downloaded) [default: mammalia_odb12]
+      --taxon           <name>      Prefix for the rRNA/mtDNA bowtie2 indexes of the species
+                                           of interest, in databases/bowtie/<taxon>_rRNA and <taxon>_mtDNA [default: phyllostomidae]
+      --ortholog_taxon  <name>      Name of the Ensembl reference taxon used in the 1-to-1
+                                           ortholog list (Scripts/List_Ortholog_1to1_<ortholog_taxon>_Hsapiens_Ensembl.tsv) [default: Microbat]
+      --busco_lineage   <name>      BUSCO lineage dataset name (online mode, auto-downloaded) [default: mammalia_odb12]
 
     Mitogenome assembly (NOVOPlasty + MITOS2) :
       --novoplasty_seed          <fasta>   Mitochondrial seed sequence (e.g. COI), required
@@ -92,8 +102,7 @@ def helpMessage() {
       --mitos_code               <int>     Genetic code for MITOS2 [default: 2]
 
     Downstream mode only:
-      --previous_outdirs         <list>    Comma-separated list of previous --mode per_sample output directories to combine,
-                                                                               e.g.:results_batch1,results_batch2
+      --previous_outdirs         <list>    Comma-separated list of previous --mode per_sample output directories to combine (e.g. results_batch1,results_batch2)
                                  
     Optional:                    
       --outdir                   <dir>     Output directory [default: results]
